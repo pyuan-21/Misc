@@ -63,14 +63,19 @@ function log_hitpoint_all()
     end
 end
 
-function get_player_ctx()
+function get_player_ctx_list()
     local cm = sdk.get_managed_singleton("app.CharacterManager")
     if cm then
         local list = cm:call("get_PlayerContextList")
         local size = list:call("get_Count")
-        if size and size == 1 then
-            local ctx = list:call("get_Item", 0)
-            return ctx
+        -- log.info("players size: " .. tostring(size))
+        if size then
+            local ctx_list = {}
+            for i = 0, size - 1 do
+                local ctx = list:call("get_Item", i)
+                if ctx then ctx_list[#ctx_list+1] = ctx end
+            end
+            return ctx_list
         end
     end
 end
@@ -83,10 +88,13 @@ function update_hitpoint(ctx, value)
 end
 
 function on_lock_hitpoint()
-	local ctx = get_player_ctx()
-    if ctx then
-        update_hitpoint(ctx, 2000)
-        -- log.info("[Player HP updated!]")
+	local ctx_list = get_player_ctx_list()
+    if ctx_list then
+        for i = 1, #ctx_list do
+            local ctx = ctx_list[i]
+            update_hitpoint(ctx, 2000)
+            -- log.info("[Player at index " .. tostring(i) .. " HP updated!]")
+        end
     end
 end
 
@@ -160,8 +168,8 @@ end
 
 function on_f1_pressed()
 	log.info("[on_f1_pressed]")
-    log.info("lock_hitpoint: " .. tostring(lock_hitpoint))
     lock_hitpoint = not lock_hitpoint
+    log.info("lock_hitpoint: " .. tostring(lock_hitpoint))
 end
 
 function set_enemies_to_weak()
