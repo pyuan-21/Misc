@@ -129,7 +129,6 @@ function set_enemies_weak(re4)
                             end
                         end
                     end
-                    break
                 end
             end
         end
