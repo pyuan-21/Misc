@@ -4,6 +4,7 @@ local god_mode = true
 local counter = 0
 local f1_pressed = false
 local f2_pressed = false
+local f3_pressed = false
 local ignore_dmg = false
 local ignore_all_dmg = false -- including enemy, only set it to true when it is final scene(escaping via boat)
 
@@ -109,6 +110,32 @@ function act_as_god(re4)
     end
 end
 
+function set_enemies_weak(re4)
+    local character_manager = sdk.get_managed_singleton(sdk.game_namespace("CharacterManager"))
+    if character_manager then
+        local enemy_list = character_manager:get_EnemyContextList()
+        if enemy_list then
+            local count = enemy_list:get_Count()
+            if count then
+                for i = 0, count - 1 do
+                    local enemy = enemy_list:get_Item(i)
+                    if enemy then
+                        local hp = enemy:get_HitPoint()
+                        if hp then
+                            local isDead = hp:get_IsDead()
+                            if not isDead then
+                                hp:set_CurrentHitPoint(1)
+                                -- print("successfully set enemy at index [" .. tostring(i) .. "] to weak!")
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+        end
+    end
+end
+
 function on_f1_pressed(re4)
     -- print("[on_f1_pressed]")
     ignore_dmg = not ignore_dmg
@@ -119,6 +146,11 @@ function on_f2_pressed(re4)
     -- print("[on_f2_pressed]")
     ignore_all_dmg = not ignore_all_dmg
     print("ignore_all_dmg:", ignore_all_dmg)
+end
+
+function on_f3_pressed(re4)
+    print("[on_f3_pressed]")
+    set_enemies_weak(re4)
 end
 
 re.on_frame(function()
@@ -140,8 +172,15 @@ re.on_frame(function()
         on_f2_pressed(re4)
     end
 
+    -- F3 trigger
+    if not f3_pressed and reframework:is_key_down("0x72") then
+        f3_pressed = true
+        on_f3_pressed(re4)
+    end
+
     if counter == 0 then
         f1_pressed = false
         f2_pressed = false
+        f3_pressed = false
     end
 end)
