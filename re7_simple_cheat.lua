@@ -4,7 +4,7 @@ local f1_pressed = false
 local f2_pressed = false
 local lock_ammo = false
 local frequence = 10 -- each N frames to update HP
-local god_mode = false
+local auto_fill_remedy = false
 
 function print_REManagedObject(obj)
     print("=========== start print REManagedObject ================")
@@ -126,8 +126,56 @@ function on_f1_pressed(re7)
     print("lock_ammo: " .. tostring(lock_ammo))
 end
 
+-- RemedyM
+local function FindItemObjs(item_name_key)
+    local item_obj_list = {}
+    local ctx = re7.get_localplayer()
+    if not ctx then return item_obj_list end
+
+    local inventory = get_component(ctx, "app.Inventory")
+    if not inventory then return item_obj_list end
+
+    local item_list = inventory:call("get_ItemList")
+
+    for i = 0, item_list:get_Count() - 1 do
+        local item_info = item_list:get_Item(i)
+
+        if item_info then
+            local item_obj = item_info:get_field("Item")
+
+            if item_obj then
+                local item_data = item_obj:call("get_ItemData")
+
+                if item_data then
+                    local item_dataID = item_data:get_field("ItemDataID")
+
+                    if string.find(item_dataID, item_name_key, 1, true) then
+                        -- print("Found:", item_dataID)
+                        table.insert(item_obj_list, item_obj)
+                    end
+                end
+            end
+        end
+    end
+    return item_obj_list
+end
+
+-- will just set the StackNum for items.
+function refill_item(item_name_key)
+    local item_obj_list = FindItemObjs(item_name_key)
+    for i, item_obj in ipairs(item_obj_list) do
+        -- print("ItemDataID:", item_obj:get_field("ItemDataID"))
+        -- print("StackNum:", item_obj:call("getStackNum"))
+        -- print("MaxStackNum:", item_obj:call("getMaxStackNum"))
+        item_obj:setStackNum(item_obj:getMaxStackNum())
+        -- print("refill_item", item_obj:get_field("ItemDataID"))
+    end
+end
+
 function on_f2_pressed(re7)
     print("[on_f2_pressed]")
+    auto_fill_remedy = not auto_fill_remedy
+    print("auto_fill_remedy: " .. tostring(auto_fill_remedy))
 end
 
 re.on_frame(function()
@@ -156,6 +204,9 @@ re.on_frame(function()
     if counter % frequence == 0 then
         if lock_ammo then
             on_lock_ammo()
+        end
+        if auto_fill_remedy then
+            refill_item("Remedy")
         end
     end
 end)
